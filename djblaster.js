@@ -1,6 +1,26 @@
 /**
  * djblaster.js
  * 
+ * @author Destin Moulton
+ * @license MIT
+ * @copyright 2015
+ * 
+ * AngularJS frontend application for DJBlaster.
+ *   - timerService sets an interval to fire on the hour
+ *     emmitting event calls to query the server for the
+ *     next set of ads to display.
+ * 
+ *   - There are three types of ads, each with their own
+ *     corresponding controller.
+ *        - Events (adEventCtrl)
+ *        - Show sponsorships (adShowSponsorshipCtrl)
+ *        - PSAs (adPSACtrl)
+ * 
+ *   - readitModalCtrl controls the modal window when
+ *     a DJ clicks that they have Read an ad.
+ * 
+ *   - debugCtrl is a controller that gives a powerful set of
+ *     debug features, allowing the simulation of hours changing
  */
 var DEBUG = {
     'active':true,
@@ -17,7 +37,13 @@ djblasterModule.run(['timerService', function(timerService){
    timerService.startInterval();
 }]);
 
-djblasterModule.controller('adShowSponsorshipCtrl',['$scope', '$http', 'timerService', 'readitService',
+/**
+ * Show Sponsorship ad controller.
+ *  - Get next show sponsorship from server
+ *  - Setup Read event handler
+ */
+djblasterModule.controller('adShowSponsorshipCtrl',
+                            ['$scope', '$http', 'timerService', 'readitService',
                             function($scope, $http, timerService, readitService){
     $scope.show_sponsorships = false;
     $scope.$on('getShowSponsorshipsFromServer', function(event, args){
@@ -27,30 +53,35 @@ djblasterModule.controller('adShowSponsorshipCtrl',['$scope', '$http', 'timerSer
 
        $http.post(BASE_URL+'/ajax/get-show-sponsorships', options).
            success(function(data, status, headers, config){
-               
-              //console.log(data);
               $scope.show_sponsorships = angular.fromJson(data);
               
            }).
            error(function(data, status, headers, config){
-               console.log("failed");
+               // TODO: Add error handler.
+               console.log("Failed to acquire Show Sponsorships from server.");
            });
     });
+
     /**
-     * The Read It button was clicked
+     * Read button click event handler.
      */
     $scope.readitClicked = function(idButtonClicked){
         readitService.initializeData(idButtonClicked);
     };
     
     $scope.renderHTML = function(e){
-        console.log($(e).text());
        return $(e).html();  
     };
 }]);
 
-djblasterModule.controller('adEventCtrl', ['$scope', '$http', 'readitService', 'timerService',
-                           function($scope, $http, readitService, timerService){
+/**
+ * Event ad controller
+ *  - Get the next Event ad from the server
+ *  - Setup the the Read event handler
+ */
+djblasterModule.controller('adEventCtrl', 
+                            ['$scope', '$http', 'readitService', 'timerService',
+                            function($scope, $http, readitService, timerService){
     $scope.events = false;
     $scope.$on('getEventsFromServer', function(event, args){
         $scope.events = false;
@@ -60,16 +91,16 @@ djblasterModule.controller('adEventCtrl', ['$scope', '$http', 'readitService', '
 
         $http.post(BASE_URL+'/ajax/get-events', options).
             success(function(data, status, headers, config){
-
                 $scope.events = angular.fromJson(data);
             }).
             error(function(data, status, headers, config){
-                console.log("failed");
+                // TODO: Add error handler.
+                console.log("Failed to acquire Events from server.");
             });
     });
     
     /**
-     * The Read It button was clicked
+     * Read button click event handler.
      */
     $scope.readitClicked = function(idButtonClicked){
 
@@ -77,8 +108,15 @@ djblasterModule.controller('adEventCtrl', ['$scope', '$http', 'readitService', '
     };
 }]);
 
-djblasterModule.controller('adPSACtrl', ['$scope', '$http', 'readitService', 'timerService',
-                           function($scope, $http, readitService, timerService){
+/**
+ * PSA ad controller
+ *  - Get the next PSA from the server
+ *  - Setup the Read event handler
+ *  - Setup the Skip PSA event handler
+ */
+djblasterModule.controller('adPSACtrl', 
+                            ['$scope', '$http', 'readitService', 'timerService',
+                            function($scope, $http, readitService, timerService){
     $scope.psas = false;
     $scope.$on('getPSAsFromServer', function(event, args){
        $scope.psas = false;
@@ -91,17 +129,21 @@ djblasterModule.controller('adPSACtrl', ['$scope', '$http', 'readitService', 'ti
               $scope.psas = angular.fromJson(data);
            }).
            error(function(data, status, headers, config){
-               console.log("failed");
+               // TODO: Add error handler
+               console.log("Failed to acquire PSA from server.");
            });
     });
     
     /**
-     * The Read It button was clicked
+     * Read button click event handler.
      */
     $scope.readitClicked = function(idButtonClicked){
         readitService.initializeData(idButtonClicked);
     };
-    
+
+    /**
+     * Skip PSA button click handler.
+     */
     $scope.skipitClicked = function(psaId){
         var options = {};
         $http.post(BASE_URL+'/ajax/skip-psa/'+psaId, options).
@@ -110,12 +152,19 @@ djblasterModule.controller('adPSACtrl', ['$scope', '$http', 'readitService', 'ti
                $scope.$broadcast('getPSAsFromServer');
            }).
            error(function(data, status, headers, config){
-               console.log("failed");
+               // TODO: Add error handler.
+               console.log("Failed to acquire PSAs from server after Skip.");
            });
     };
 }]);
 
-djblasterModule.controller('readitModalCtrl', ['$scope', 'readitService', function($scope, readitService){
+/**
+ * Read It Modal controller.
+ *  - Clear and setup the DJ initial form in the modal
+ */
+djblasterModule.controller('readitModalCtrl', 
+                            ['$scope', 'readitService', 
+                            function($scope, readitService){
     $scope.init = function () {
         // Focus on DJ initials input when the modal opens 
        $('#readItModal').on('shown.bs.modal', function(){
@@ -153,7 +202,12 @@ djblasterModule.controller('readitModalCtrl', ['$scope', 'readitService', functi
     $scope.init();
 }]);
 
-djblasterModule.controller('debugCtrl', ['$scope', 'timerService', function($scope, timerService){
+/**
+ * Debug bar controller.
+ */
+djblasterModule.controller('debugCtrl', 
+                            ['$scope', 'timerService', 
+                            function($scope, timerService){
     $scope.debugActive = DEBUG.active;
     $scope.currentDateObj = DEBUG.currentDateObj; // Object reference
     $scope.currentHour = $scope.currentDateObj.getHours();
@@ -203,6 +257,13 @@ djblasterModule.controller('debugCtrl', ['$scope', 'timerService', function($sco
     
 }]);
 
+/**
+ * Read It service
+ *  - Resets the modal DJ initial form
+ *  - POST the Read to the server
+ *  - Broadcast that a read has been performed so the
+ *    corresponding next ad is acquired from the server.
+ */
 djblasterModule.factory('readitService', ['$http', '$rootScope', 'timerService',
                          function($http, $rootScope, timerService){
     var self = this;
@@ -266,7 +327,6 @@ djblasterModule.factory('readitService', ['$http', '$rootScope', 'timerService',
  * Emit the callServer broadcast when the 
  * hour changes.
  *  
- * @service timerService
  */
 djblasterModule.factory('timerService', ['$interval', '$rootScope', function($interval, $rootScope){
    var self = this;
