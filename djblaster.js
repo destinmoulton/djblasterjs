@@ -114,6 +114,9 @@ djblasterModule.controller('adEventCtrl',
                             // TODO: Add error handler.
                             console.log("Failed to acquire Events from server.");
                         });
+                } else {
+                    // Don't show the 'loading' message when after hours
+                    $scope.events = [];
                 }
             });
 
@@ -287,8 +290,8 @@ djblasterModule.controller('debugCtrl',
  *    corresponding next ad is acquired from the server.
  */
 djblasterModule.factory('readitService', 
-    ['$http', '$rootScope', 'timerService',
-        function ($http, $rootScope, timerService) {
+    ['$http', '$rootScope', 'timerService', 'djblasterConfig',
+        function ($http, $rootScope, timerService, djblasterConfig) {
             var self = this;
             self.currentAdType = '';
             self.currentAdId = 0;
@@ -322,7 +325,8 @@ djblasterModule.factory('readitService',
                 var options = {
                     'dj_initials': djInitials,
                     'current_time': timerService.getCurrentTimestamp(),
-                    'current_hour': timerService.getCurrentHour()
+                    'current_hour': timerService.getCurrentHour(),
+                    'settings': djblasterConfig
                 };
                 $http.post(url, options).
                     success(function (data, status, headers, config) {
