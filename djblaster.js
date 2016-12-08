@@ -27,8 +27,15 @@ var DEBUG = {
     'currentDateObj': new Date()
 };
 
-
-var djblasterModule = angular.module('djblasterApp', []);
+var djblasterModule = angular.module('djblasterApp', [])
+                             .constant('djblasterConfig', {
+                                 'adEvent':{
+                                     // Configure the start and end time to get ad events
+                                     // 24 hour format
+                                     'start_hour':7,
+                                     'end_hour':21
+                                 }
+                             });
 
 /**
  * Start the timer interval to begin querying the server.
@@ -83,25 +90,31 @@ djblasterModule.controller('adShowSponsorshipCtrl',
  *  - Setup the the Read event handler
  */
 djblasterModule.controller('adEventCtrl',
-    ['$scope', '$http', 'readitService', 'timerService',
-        function ($scope, $http, readitService, timerService) {
+    ['$scope', '$http', 'readitService', 'timerService', 'djblasterConfig',
+        function ($scope, $http, readitService, timerService, djblasterConfig) {
             $scope.events = false;
             $scope.$on('getEventsFromServer', function (event, args) {
                 $scope.events = false;
 
-                var options = {
-                    'current_time': timerService.getCurrentTimestamp(),
-                    'current_hour': timerService.getCurrentHour()
-                };
+                var isAfterStartHour = timerService.getCurrentHour() >= djblasterConfig.adEvent.start_hour; 
+                var isBeforeEndHour = timerService.getCurrentHour() <= djblasterConfig.adEvent.end_hour;
+                if(isAfterStartHour && isBeforeEndHour){
+                    var postOptions = {
+                        'current_time': timerService.getCurrentTimestamp(),
+                        'current_hour': timerService.getCurrentHour(),
+                        'start_hour': djblasterConfig.adEvent.start_hour,
+                        'end_hour': djblasterConfig.adEvent.end_hour
+                    };
 
-                $http.post(BASE_URL + '/ajax/get-events', options).
-                    success(function (data, status, headers, config) {
-                        $scope.events = angular.fromJson(data);
-                    }).
-                    error(function (data, status, headers, config) {
-                        // TODO: Add error handler.
-                        console.log("Failed to acquire Events from server.");
-                    });
+                    $http.post(BASE_URL + '/ajax/get-events', postOptions).
+                        success(function (data, status, headers, config) {
+                            $scope.events = angular.fromJson(data);
+                        }).
+                        error(function (data, status, headers, config) {
+                            // TODO: Add error handler.
+                            console.log("Failed to acquire Events from server.");
+                        });
+                }
             });
 
             /**
