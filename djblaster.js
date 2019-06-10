@@ -23,7 +23,7 @@
  *     debug features, allowing the simulation of hours changing
  */
 var DEBUG = {
-    active: true,
+    active: false,
     currentDateObj: new Date()
 };
 
