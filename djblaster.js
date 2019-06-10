@@ -419,6 +419,7 @@ djblasterModule.factory("timerService", [
 
         self.getCurrentHour = function() {
             if (DEBUG.active) {
+                console.log("DEBUG.active");
                 return DEBUG.currentDateObj.getHours();
             } else {
                 var date = new Date();
